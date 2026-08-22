@@ -1,0 +1,21 @@
+node_modules
+dist
+out
+.DS_Store
+.eslintcache
+*.log*
+*.tsbuildinfo
+
+# ── App data — NEVER commit ─────────────────────────────────────────────
+# The data folder holds the real client database (data.db), backups, logs,
+# temp uploads, and Jira credentials. None of it belongs in version control.
+/data/
+data.db
+data.db-*
+
+# ── Secrets / credentials / env ─────────────────────────────────────────
+.env
+.env.*
+*credentials*.json
+*.pem
+*.key
