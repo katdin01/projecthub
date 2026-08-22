@@ -122,11 +122,13 @@ export function Modal({
   wide?: boolean
 }): React.JSX.Element | null {
   if (!open) return null
+  // The backdrop intentionally does NOT close the dialog on click: data-entry
+  // dialogs must be dismissed via their Cancel/Save buttons (or the ✕) so a stray
+  // click outside can't discard unsaved input.
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 pt-16" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 pt-16">
       <div
         className={clsx('max-h-[80vh] overflow-y-auto rounded-lg bg-white p-5 shadow-xl', wide ? 'w-[42rem]' : 'w-[28rem]')}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold text-slate-800">{title}</h3>
