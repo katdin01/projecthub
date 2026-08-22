@@ -36,7 +36,9 @@ const emptyForm = {
   priority: 'medium',
   assignee: '',
   source_table: '',
-  source_field: ''
+  source_field: '',
+  target_table: '',
+  target_field: ''
 }
 
 export function JiraTab({
@@ -129,7 +131,8 @@ export function JiraTab({
       decisions: null,
       dependencies: null,
       blockers: null,
-      resolution_details: null
+      resolution_details: null,
+      sql_code: null
     })
     setModalOpen(false)
     navigate(`/projects/${projectId}/jira/${created.id}`)
@@ -441,6 +444,22 @@ export function JiraTab({
                 value={form.source_field}
                 onChange={(e) => setForm({ ...form, source_field: e.target.value })}
                 placeholder="e.g. ActivityTypeCode"
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Target table">
+              <Input
+                value={form.target_table}
+                onChange={(e) => setForm({ ...form, target_table: e.target.value })}
+                placeholder="e.g. CONSTITUENT"
+              />
+            </Field>
+            <Field label="Target field">
+              <Input
+                value={form.target_field}
+                onChange={(e) => setForm({ ...form, target_field: e.target.value })}
+                placeholder="e.g. LOOKUPID"
               />
             </Field>
           </div>

@@ -12,6 +12,7 @@ import type {
 import { JIRA_INTERNAL_STATUSES } from '@shared/types'
 import { Badge, Button, Field, Input, Select, Textarea } from '../components/ui'
 import { formatDate, isJiraExternallyResolved } from '../lib/format'
+import { format as formatSqlDialect } from 'sql-formatter'
 
 const internalStatusTone: Record<JiraInternalStatus, 'slate' | 'green' | 'yellow' | 'blue' | 'purple' | 'orange'> = {
   Open: 'slate',
@@ -66,6 +67,17 @@ export function JiraDetailPage(): React.JSX.Element {
     if (!item || !item.issue_id.trim() || !item.issue_name.trim()) return
     await api.jira.update(itemId, item)
     refresh()
+  }
+
+  // Pretty-print the SQL/code field using T-SQL (MSSQL) rules. Lenient: a bad
+  // snippet is left as-is rather than crashing.
+  function formatSql(): void {
+    if (!item || !item.sql_code || !item.sql_code.trim()) return
+    try {
+      setItem({ ...item, sql_code: formatSqlDialect(item.sql_code, { language: 'tsql' }) })
+    } catch {
+      /* leave the code unchanged if it can't be parsed */
+    }
   }
 
   async function remove(): Promise<void> {
@@ -340,6 +352,40 @@ export function JiraDetailPage(): React.JSX.Element {
             />
           </Field>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Target table">
+            <Input
+              value={item.target_table ?? ''}
+              onChange={(e) => setItem({ ...item, target_table: e.target.value })}
+              placeholder="e.g. CONSTITUENT"
+            />
+          </Field>
+          <Field label="Target field">
+            <Input
+              value={item.target_field ?? ''}
+              onChange={(e) => setItem({ ...item, target_field: e.target.value })}
+              placeholder="e.g. LOOKUPID"
+            />
+          </Field>
+        </div>
+        <Field label="SQL / code (MSSQL)">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">Conversion SQL for this ticket. Local only — never sent to Jira.</span>
+              <Button variant="ghost" onClick={formatSql} disabled={!item.sql_code || !item.sql_code.trim()}>
+                Format as MSSQL
+              </Button>
+            </div>
+            <Textarea
+              rows={10}
+              className="font-mono text-xs"
+              spellCheck={false}
+              value={item.sql_code ?? ''}
+              onChange={(e) => setItem({ ...item, sql_code: e.target.value })}
+              placeholder="Paste or write T-SQL here, then click Format as MSSQL"
+            />
+          </div>
+        </Field>
         <Field label="Internal notes">
           <Textarea rows={3} value={item.internal_notes ?? ''} onChange={(e) => setItem({ ...item, internal_notes: e.target.value })} />
         </Field>

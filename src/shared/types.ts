@@ -275,6 +275,10 @@ export interface JiraItem {
   assignee: string | null
   source_table: string | null
   source_field: string | null
+  // Conversion mapping (destination) + a free SQL/code field — all local-only.
+  target_table: string | null
+  target_field: string | null
+  sql_code: string | null
   internal_notes: string | null
   technical_notes: string | null
   questions: string | null

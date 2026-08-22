@@ -27,6 +27,7 @@
     "react-dom": "^19.2.1",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
+    "sql-formatter": "^15.8.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

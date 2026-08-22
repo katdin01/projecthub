@@ -65,12 +65,14 @@ export function createJiraItem(input: JiraItemInput): JiraItem {
     .prepare(
       `INSERT INTO jira_items (project_id, jira_url, issue_id, issue_name, description, external_status,
        internal_status, priority, assignee, source_table, source_field, internal_notes, technical_notes,
-       questions, decisions, dependencies, blockers, resolution_details, fix_versions, affects_versions)
+       questions, decisions, dependencies, blockers, resolution_details, fix_versions, affects_versions,
+       target_table, target_field, sql_code)
        VALUES (@project_id, @jira_url, @issue_id, @issue_name, @description, @external_status,
        @internal_status, @priority, @assignee, @source_table, @source_field, @internal_notes, @technical_notes,
-       @questions, @decisions, @dependencies, @blockers, @resolution_details, @fix_versions, @affects_versions)`
+       @questions, @decisions, @dependencies, @blockers, @resolution_details, @fix_versions, @affects_versions,
+       @target_table, @target_field, @sql_code)`
     )
-    .run({ fix_versions: null, affects_versions: null, ...input })
+    .run({ fix_versions: null, affects_versions: null, target_table: null, target_field: null, sql_code: null, ...input })
   return getJiraItem(result.lastInsertRowid as number)!
 }
 
@@ -86,6 +88,7 @@ export function updateJiraItem(id: number, input: Partial<JiraItemInput>): JiraI
      technical_notes=@technical_notes, questions=@questions, decisions=@decisions,
      dependencies=@dependencies, blockers=@blockers, resolution_details=@resolution_details,
      fix_versions=@fix_versions, affects_versions=@affects_versions,
+     target_table=@target_table, target_field=@target_field, sql_code=@sql_code,
      updated_at=datetime('now') WHERE id=@id`
   ).run(merged)
   return getJiraItem(id)!
