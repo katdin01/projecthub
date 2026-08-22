@@ -15,6 +15,17 @@ const internalStatusTone: Record<JiraInternalStatus, 'slate' | 'green' | 'yellow
   'Assigned Externally': 'green'
 }
 
+const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+
+// Split a Jira key like "CORD-123" into prefix + number so tickets sort
+// numerically (CORD-2 before CORD-10) rather than lexically.
+function parseTicketNumber(id: string): { prefix: string; num: number } {
+  const m = id.match(/^(.*?)(\d+)\s*$/)
+  return m ? { prefix: m[1].toLowerCase(), num: parseInt(m[2], 10) } : { prefix: id.toLowerCase(), num: 0 }
+}
+
+const hasQuestions = (item: JiraItem): boolean => !!(item.questions && item.questions.trim())
+
 const emptyForm = {
   jira_url: '',
   issue_id: '',
@@ -49,6 +60,8 @@ export function JiraTab({
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [assigneeFilter, setAssigneeFilter] = useState('all')
   const [sourceTableFilter, setSourceTableFilter] = useState('all')
+  const [questionsFilter, setQuestionsFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('updated')
 
   const [connections, setConnections] = useState<JiraConnectionSummary[] | null>(null)
   const [jqlDraft, setJqlDraft] = useState(project.jira_jql ?? '')
@@ -147,10 +160,32 @@ export function JiraTab({
         if (assigneeFilter === 'unassigned' ? item.assignee : item.assignee !== assigneeFilter) return false
       }
       if (sourceTableFilter !== 'all' && item.source_table !== sourceTableFilter) return false
+      if (questionsFilter === 'yes' && !hasQuestions(item)) return false
+      if (questionsFilter === 'no' && hasQuestions(item)) return false
       if (q && !`${item.issue_id} ${item.issue_name}`.toLowerCase().includes(q)) return false
       return true
     })
-  }, [items, search, externalStatusFilter, internalStatusFilter, priorityFilter, assigneeFilter, sourceTableFilter])
+  }, [items, search, externalStatusFilter, internalStatusFilter, priorityFilter, assigneeFilter, sourceTableFilter, questionsFilter])
+
+  // Sorting is applied after filtering. "updated" keeps the server's order
+  // (unresolved first, then most recently updated).
+  const sorted = useMemo(() => {
+    const arr = [...filtered]
+    if (sortBy === 'priority') {
+      arr.sort(
+        (a, b) =>
+          (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99) ||
+          b.updated_at.localeCompare(a.updated_at)
+      )
+    } else if (sortBy === 'ticket') {
+      arr.sort((a, b) => {
+        const pa = parseTicketNumber(a.issue_id)
+        const pb = parseTicketNumber(b.issue_id)
+        return pa.prefix.localeCompare(pb.prefix) || pa.num - pb.num
+      })
+    }
+    return arr
+  }, [filtered, sortBy])
 
   return (
     <div className="space-y-3">
@@ -228,7 +263,7 @@ export function JiraTab({
             onChange={(e) => setSearch(e.target.value)}
           />
           <Select className="!w-44" value={externalStatusFilter} onChange={(e) => setExternalStatusFilter(e.target.value)}>
-            <option value="all">All external statuses</option>
+            <option value="all">Any Jira status</option>
             {externalStatuses.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -269,12 +304,23 @@ export function JiraTab({
               ))}
             </Select>
           )}
+          <Select className="!w-40" value={questionsFilter} onChange={(e) => setQuestionsFilter(e.target.value)}>
+            <option value="all">Questions: any</option>
+            <option value="yes">Has questions</option>
+            <option value="no">No questions</option>
+          </Select>
+          <Select className="!w-52" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="updated">Sort: recently updated</option>
+            <option value="priority">Sort: priority (high → low)</option>
+            <option value="ticket">Sort: ticket number</option>
+          </Select>
           {(search ||
             externalStatusFilter !== 'all' ||
             internalStatusFilter !== 'all' ||
             priorityFilter !== 'all' ||
             assigneeFilter !== 'all' ||
-            sourceTableFilter !== 'all') && (
+            sourceTableFilter !== 'all' ||
+            questionsFilter !== 'all') && (
             <button
               className="text-xs text-slate-400 hover:text-slate-600"
               onClick={() => {
@@ -284,6 +330,7 @@ export function JiraTab({
                 setPriorityFilter('all')
                 setAssigneeFilter('all')
                 setSourceTableFilter('all')
+                setQuestionsFilter('all')
               }}
             >
               Clear filters
@@ -301,7 +348,7 @@ export function JiraTab({
         <EmptyState>No {label} items match these filters.</EmptyState>
       ) : (
         <div className="space-y-2">
-          {filtered.map((item) => (
+          {sorted.map((item) => (
             <Card key={item.id} className="cursor-pointer">
               <div onClick={() => navigate(`/projects/${projectId}/jira/${item.id}`)} className="flex items-start justify-between">
                 <div>
@@ -318,6 +365,7 @@ export function JiraTab({
                     <Badge tone={item.priority === 'critical' || item.priority === 'high' ? 'red' : 'blue'}>{item.priority}</Badge>
                     {item.assignee ? <span>{item.assignee}</span> : <Badge tone="yellow">unassigned</Badge>}
                     {item.blockers && <Badge tone="red">blocked</Badge>}
+                    {hasQuestions(item) && <Badge tone="yellow">questions</Badge>}
                     {item.source_table && (
                       <span>
                         {item.source_table}
