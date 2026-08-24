@@ -51,6 +51,7 @@ export function ScheduleTab({ projectId }: { projectId: number }): React.JSX.Ele
   const [form, setForm] = useState({ name: '', due_date: '' })
   const [notesItem, setNotesItem] = useState<ScheduleItem | null>(null)
   const [notesDraft, setNotesDraft] = useState('')
+  const [blockerDraft, setBlockerDraft] = useState('')
 
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | ScheduleStatus>('all')
@@ -103,6 +104,7 @@ export function ScheduleTab({ projectId }: { projectId: number }): React.JSX.Ele
       start_date: null,
       resource_names: null,
       notes: null,
+      blocker: null,
       is_da_item: false
     })
     setForm({ name: '', due_date: '' })
@@ -124,11 +126,12 @@ export function ScheduleTab({ projectId }: { projectId: number }): React.JSX.Ele
   function openNotes(item: ScheduleItem): void {
     setNotesItem(item)
     setNotesDraft(item.notes ?? '')
+    setBlockerDraft(item.blocker ?? '')
   }
 
   async function saveNotes(): Promise<void> {
     if (!notesItem) return
-    await api.schedule.update(notesItem.id, { notes: notesDraft || null })
+    await api.schedule.update(notesItem.id, { notes: notesDraft || null, blocker: blockerDraft || null })
     setNotesItem(null)
     refresh()
   }
@@ -352,6 +355,11 @@ export function ScheduleTab({ projectId }: { projectId: number }): React.JSX.Ele
                       <button className="w-full whitespace-normal break-words text-left hover:underline" onClick={() => openNotes(item)}>
                         {item.notes || '+ add notes'}
                       </button>
+                      {item.blocker && (
+                        <div className="mt-0.5 whitespace-normal break-words text-xs text-red-500" title={item.blocker}>
+                          ⚠ {item.blocker}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )
@@ -375,9 +383,19 @@ export function ScheduleTab({ projectId }: { projectId: number }): React.JSX.Ele
         </div>
       </Modal>
 
-      <Modal open={!!notesItem} onClose={() => setNotesItem(null)} title={notesItem ? `Notes — ${notesItem.name}` : 'Notes'}>
+      <Modal open={!!notesItem} onClose={() => setNotesItem(null)} title={notesItem ? `Notes & blocker — ${notesItem.name}` : 'Notes'}>
         <div className="space-y-3">
-          <Textarea rows={5} value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} placeholder="Add your own notes…" />
+          <Field label="Notes">
+            <Textarea rows={4} value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} placeholder="Add your own notes…" />
+          </Field>
+          <Field label="Blocker">
+            <Textarea
+              rows={2}
+              value={blockerDraft}
+              onChange={(e) => setBlockerDraft(e.target.value)}
+              placeholder="What's blocking this item? Leave blank if nothing."
+            />
+          </Field>
           <div className="flex justify-end">
             <Button onClick={saveNotes}>Save</Button>
           </div>

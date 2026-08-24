@@ -100,6 +100,7 @@ export interface ScheduleItem {
   resource_names: string | null
   // User-entered only — never populated from an Excel import.
   notes: string | null
+  blocker: string | null
   // Flagged via the source workbook's own "KD Notes"-style annotation column at import time.
   is_da_item: boolean
   created_at: string
@@ -180,6 +181,7 @@ export interface ProjectTask {
   due_date: string | null
   delivery_type: DeliveryType | null
   notes: string | null
+  blocker: string | null
   // Set when this task was generated from a note's "+ Create task" button.
   source_note_id: number | null
   // Joined in for display only — the note's title at read time (null if

@@ -37,6 +37,7 @@ const emptyForm = {
   due_date: '',
   delivery_type: '' as DeliveryType | '',
   notes: '',
+  blocker: '',
   source_note_id: null as number | null
 }
 
@@ -91,6 +92,7 @@ export function TasksTab({
       due_date: t.due_date ?? '',
       delivery_type: t.delivery_type ?? '',
       notes: t.notes ?? '',
+      blocker: t.blocker ?? '',
       source_note_id: t.source_note_id
     })
     setEditingId(t.id)
@@ -109,6 +111,7 @@ export function TasksTab({
       due_date: form.due_date || null,
       delivery_type: form.delivery_type || null,
       notes: form.notes || null,
+      blocker: form.blocker || null,
       source_note_id: form.source_note_id
     }
     if (editingId) {
@@ -291,6 +294,14 @@ export function TasksTab({
           <Field label="Notes">
             <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </Field>
+          <Field label="Blocker">
+            <Textarea
+              rows={2}
+              value={form.blocker}
+              onChange={(e) => setForm({ ...form, blocker: e.target.value })}
+              placeholder="What's blocking this task? Leave blank if nothing."
+            />
+          </Field>
           <div className="flex justify-end">
             <Button onClick={save}>{editingId ? 'Save' : 'Create'}</Button>
           </div>
@@ -355,6 +366,11 @@ function TaskTable({
                 {t.title}
               </button>
               {t.notes && <div className="mt-0.5 max-w-xs truncate text-xs text-slate-400">{t.notes}</div>}
+              {t.blocker && (
+                <div className="mt-0.5 max-w-xs truncate text-xs text-red-500" title={t.blocker}>
+                  ⚠ {t.blocker}
+                </div>
+              )}
               {t.source_note_title && (
                 <Link
                   to={`?tab=notes&note=${t.source_note_id}`}

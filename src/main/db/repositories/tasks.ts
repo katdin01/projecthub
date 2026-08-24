@@ -43,10 +43,10 @@ export function createTask(input: ProjectTaskInput): ProjectTask {
   const db = getDb()
   const result = db
     .prepare(
-      `INSERT INTO tasks (project_id, category_id, title, status, priority, owner, due_date, delivery_type, notes, source_note_id)
-       VALUES (@project_id, @category_id, @title, @status, @priority, @owner, @due_date, @delivery_type, @notes, @source_note_id)`
+      `INSERT INTO tasks (project_id, category_id, title, status, priority, owner, due_date, delivery_type, notes, blocker, source_note_id)
+       VALUES (@project_id, @category_id, @title, @status, @priority, @owner, @due_date, @delivery_type, @notes, @blocker, @source_note_id)`
     )
-    .run(input)
+    .run({ blocker: null, ...input })
   return getTask(result.lastInsertRowid as number)!
 }
 
@@ -58,7 +58,7 @@ export function updateTask(id: number, input: Partial<ProjectTaskInput>): Projec
   const completedAt = merged.status === 'done' ? (existing.completed_at ?? new Date().toISOString()) : null
   db.prepare(
     `UPDATE tasks SET category_id=@category_id, title=@title, status=@status, priority=@priority,
-     owner=@owner, due_date=@due_date, delivery_type=@delivery_type, notes=@notes,
+     owner=@owner, due_date=@due_date, delivery_type=@delivery_type, notes=@notes, blocker=@blocker,
      source_note_id=@source_note_id, completed_at=@completed_at, updated_at=datetime('now') WHERE id=@id`
   ).run({ ...merged, completed_at: completedAt })
   return getTask(id)!

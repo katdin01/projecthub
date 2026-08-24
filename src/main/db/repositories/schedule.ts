@@ -19,11 +19,11 @@ export function createScheduleItem(input: ScheduleItemInput): ScheduleItem {
   const result = db
     .prepare(
       `INSERT INTO schedule_items (project_id, name, due_date, status, sort_order, watched,
-       start_date, resource_names, notes, is_da_item)
+       start_date, resource_names, notes, blocker, is_da_item)
        VALUES (@project_id, @name, @due_date, @status, @sort_order, @watched,
-       @start_date, @resource_names, @notes, @is_da_item)`
+       @start_date, @resource_names, @notes, @blocker, @is_da_item)`
     )
-    .run({ ...input, watched: input.watched ? 1 : 0, is_da_item: input.is_da_item ? 1 : 0 })
+    .run({ blocker: null, ...input, watched: input.watched ? 1 : 0, is_da_item: input.is_da_item ? 1 : 0 })
   return toScheduleItem(
     db.prepare('SELECT * FROM schedule_items WHERE id = ?').get(result.lastInsertRowid) as ScheduleItemRow
   )
@@ -42,7 +42,7 @@ export function updateScheduleItem(id: number, input: Partial<ScheduleItemInput>
   db.prepare(
     `UPDATE schedule_items SET name=@name, due_date=@due_date,
      status=@status, sort_order=@sort_order, watched=@watched, start_date=@start_date,
-     resource_names=@resource_names, notes=@notes, is_da_item=@is_da_item,
+     resource_names=@resource_names, notes=@notes, blocker=@blocker, is_da_item=@is_da_item,
      updated_at=datetime('now') WHERE id=@id`
   ).run(merged)
   return toScheduleItem(db.prepare('SELECT * FROM schedule_items WHERE id = ?').get(id) as ScheduleItemRow)
