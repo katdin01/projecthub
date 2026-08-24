@@ -30,8 +30,8 @@ echo   Starting ProjectHub...
 echo   Keep this window open while you use the app. Close it to stop.
 echo.
 
-rem Open the browser a few seconds after the server has had time to start.
-start "" cmd /c "timeout /t 4 >nul & start "" http://localhost:4317/"
+rem Open the app in a clean Edge app-window a few seconds after the server starts.
+start "" cmd /c "timeout /t 4 >nul & start msedge --app=http://localhost:4317/"
 
 call npm run serve
 
