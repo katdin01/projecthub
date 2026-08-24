@@ -60,7 +60,9 @@ export function ScheduleTab({ projectId }: { projectId: number }): React.JSX.Ele
   const [toDate, setToDate] = useState('')
   const [colWidths, setColWidths] = useState<Record<ColKey, number>>(DEFAULT_COL_WIDTHS)
   const [sortKey, setSortKey] = useState<SortKey>('due_date')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  // Default to newest due date at the top (descending); items with no due date
+  // still fall to the bottom.
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   function applyThisWeek(): void {
     const monday = startOfWeek(new Date())
