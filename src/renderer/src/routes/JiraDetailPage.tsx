@@ -14,6 +14,11 @@ import { Badge, Button, Field, Input, Select, Textarea } from '../components/ui'
 import { formatDate, isJiraExternallyResolved } from '../lib/format'
 import { format as formatSqlDialect } from 'sql-formatter'
 
+// Writing back to Jira (comments, status transitions, field pushes) is
+// temporarily disabled while reads/sync stay on. Flip to true to re-enable.
+const JIRA_WRITE_ENABLED = false
+const JIRA_WRITE_DISABLED_TITLE = 'Writing to Jira is temporarily disabled — reading/sync still works.'
+
 const internalStatusTone: Record<JiraInternalStatus, 'slate' | 'green' | 'yellow' | 'blue' | 'purple' | 'orange'> = {
   Open: 'slate',
   'Looked at - No Questions': 'blue',
@@ -274,7 +279,12 @@ export function JiraDetailPage(): React.JSX.Element {
               placeholder="e.g. In Review"
             />
             {transitions === null ? (
-              <Button variant="secondary" onClick={loadTransitions} disabled={jiraBusy}>
+              <Button
+                variant="secondary"
+                onClick={loadTransitions}
+                disabled={jiraBusy || !JIRA_WRITE_ENABLED}
+                title={!JIRA_WRITE_ENABLED ? JIRA_WRITE_DISABLED_TITLE : undefined}
+              >
                 Change status in Jira…
               </Button>
             ) : transitions.length === 0 ? (
@@ -307,13 +317,18 @@ export function JiraDetailPage(): React.JSX.Element {
           <Button variant="secondary" onClick={save}>
             Save locally
           </Button>
-          <Button onClick={pushFields} disabled={jiraBusy}>
+          <Button
+            onClick={pushFields}
+            disabled={jiraBusy || !JIRA_WRITE_ENABLED}
+            title={!JIRA_WRITE_ENABLED ? JIRA_WRITE_DISABLED_TITLE : undefined}
+          >
             Push to Jira →
           </Button>
         </div>
         <p className="text-right text-xs text-slate-400">
-          "Push to Jira" writes Summary, Description, Priority, Assignee &amp; Version fields to the real ticket
-          (Status uses the workflow control above).
+          {JIRA_WRITE_ENABLED
+            ? '"Push to Jira" writes Summary, Description, Priority, Assignee & Version fields to the real ticket (Status uses the workflow control above).'
+            : 'Writing to Jira is temporarily disabled — this ticket is read-only from Jira. "Save locally" still works.'}
         </p>
       </div>
 
@@ -470,7 +485,12 @@ export function JiraDetailPage(): React.JSX.Element {
                 <Button variant="ghost" onClick={postLocalComment}>
                   Save locally
                 </Button>
-                <Button variant="secondary" onClick={postCommentToJira} disabled={jiraBusy}>
+                <Button
+                  variant="secondary"
+                  onClick={postCommentToJira}
+                  disabled={jiraBusy || !JIRA_WRITE_ENABLED}
+                  title={!JIRA_WRITE_ENABLED ? JIRA_WRITE_DISABLED_TITLE : undefined}
+                >
                   Post to Jira
                 </Button>
               </div>
