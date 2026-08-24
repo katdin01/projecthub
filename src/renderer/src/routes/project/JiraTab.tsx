@@ -64,6 +64,7 @@ export function JiraTab({
   const [sourceTableFilter, setSourceTableFilter] = useState('all')
   const [questionsFilter, setQuestionsFilter] = useState('all')
   const [sortBy, setSortBy] = useState('updated')
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const [connections, setConnections] = useState<JiraConnectionSummary[] | null>(null)
   const [jqlDraft, setJqlDraft] = useState(project.jira_jql ?? '')
@@ -190,6 +191,26 @@ export function JiraTab({
     return arr
   }, [filtered, sortBy])
 
+  const activeFilters = [
+    search !== '',
+    externalStatusFilter !== 'all',
+    internalStatusFilter !== 'all',
+    priorityFilter !== 'all',
+    assigneeFilter !== 'all',
+    sourceTableFilter !== 'all',
+    questionsFilter !== 'all'
+  ].filter(Boolean).length
+
+  function clearFilters(): void {
+    setSearch('')
+    setExternalStatusFilter('all')
+    setInternalStatusFilter('all')
+    setPriorityFilter('all')
+    setAssigneeFilter('all')
+    setSourceTableFilter('all')
+    setQuestionsFilter('all')
+  }
+
   return (
     <div className="space-y-3">
       {connections !== null && connections.length === 0 ? (
@@ -258,90 +279,83 @@ export function JiraTab({
       </div>
 
       {items.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            className="!w-56"
-            placeholder="Search issue key or title…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Select className="!w-44" value={externalStatusFilter} onChange={(e) => setExternalStatusFilter(e.target.value)}>
-            <option value="all">Any Jira status</option>
-            {externalStatuses.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </Select>
-          <Select className="!w-48" value={internalStatusFilter} onChange={(e) => setInternalStatusFilter(e.target.value)}>
-            <option value="all">All internal statuses</option>
-            {JIRA_INTERNAL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </Select>
-          <Select className="!w-40" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
-            <option value="all">All priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </Select>
-          <Select className="!w-48" value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
-            <option value="all">All assignees</option>
-            <option value="unassigned">Unassigned</option>
-            {assignees.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </Select>
-          {sourceTables.length > 0 && (
-            <Select className="!w-48" value={sourceTableFilter} onChange={(e) => setSourceTableFilter(e.target.value)}>
-              <option value="all">All source tables</option>
-              {sourceTables.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => setFiltersOpen((o) => !o)}>
+              {filtersOpen ? '▾' : '▸'} Filters{activeFilters > 0 ? ` (${activeFilters})` : ''}
+            </Button>
+            {activeFilters > 0 && (
+              <button className="text-xs text-slate-400 hover:text-slate-600" onClick={clearFilters}>
+                Clear
+              </button>
+            )}
+            <Select className="!w-52" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="updated">Sort: recently updated</option>
+              <option value="priority">Sort: priority (high → low)</option>
+              <option value="ticket">Sort: ticket number</option>
             </Select>
+            <span className="ml-auto text-xs text-slate-400">
+              {filtered.length} of {items.length}
+            </span>
+          </div>
+
+          {filtersOpen && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+              <Input
+                className="!w-56"
+                placeholder="Search issue key or title…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <Select className="!w-44" value={externalStatusFilter} onChange={(e) => setExternalStatusFilter(e.target.value)}>
+                <option value="all">Any Jira status</option>
+                {externalStatuses.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+              <Select className="!w-48" value={internalStatusFilter} onChange={(e) => setInternalStatusFilter(e.target.value)}>
+                <option value="all">All internal statuses</option>
+                {JIRA_INTERNAL_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+              <Select className="!w-40" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+                <option value="all">All priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </Select>
+              <Select className="!w-48" value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
+                <option value="all">All assignees</option>
+                <option value="unassigned">Unassigned</option>
+                {assignees.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </Select>
+              {sourceTables.length > 0 && (
+                <Select className="!w-48" value={sourceTableFilter} onChange={(e) => setSourceTableFilter(e.target.value)}>
+                  <option value="all">All source tables</option>
+                  {sourceTables.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              <Select className="!w-40" value={questionsFilter} onChange={(e) => setQuestionsFilter(e.target.value)}>
+                <option value="all">Questions: any</option>
+                <option value="yes">Has questions</option>
+                <option value="no">No questions</option>
+              </Select>
+            </div>
           )}
-          <Select className="!w-40" value={questionsFilter} onChange={(e) => setQuestionsFilter(e.target.value)}>
-            <option value="all">Questions: any</option>
-            <option value="yes">Has questions</option>
-            <option value="no">No questions</option>
-          </Select>
-          <Select className="!w-52" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="updated">Sort: recently updated</option>
-            <option value="priority">Sort: priority (high → low)</option>
-            <option value="ticket">Sort: ticket number</option>
-          </Select>
-          {(search ||
-            externalStatusFilter !== 'all' ||
-            internalStatusFilter !== 'all' ||
-            priorityFilter !== 'all' ||
-            assigneeFilter !== 'all' ||
-            sourceTableFilter !== 'all' ||
-            questionsFilter !== 'all') && (
-            <button
-              className="text-xs text-slate-400 hover:text-slate-600"
-              onClick={() => {
-                setSearch('')
-                setExternalStatusFilter('all')
-                setInternalStatusFilter('all')
-                setPriorityFilter('all')
-                setAssigneeFilter('all')
-                setSourceTableFilter('all')
-                setQuestionsFilter('all')
-              }}
-            >
-              Clear filters
-            </button>
-          )}
-          <span className="ml-auto text-xs text-slate-400">
-            {filtered.length} of {items.length}
-          </span>
         </div>
       )}
 
@@ -369,13 +383,29 @@ export function JiraTab({
                     {item.assignee ? <span>{item.assignee}</span> : <Badge tone="yellow">unassigned</Badge>}
                     {item.blockers && <Badge tone="red">blocked</Badge>}
                     {hasQuestions(item) && <Badge tone="yellow">questions</Badge>}
-                    {item.source_table && (
-                      <span>
-                        {item.source_table}
-                        {item.source_field ? `.${item.source_field}` : ''}
-                      </span>
-                    )}
                   </div>
+                  {(item.source_table || item.target_table) && (
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-600">
+                      {item.source_table && (
+                        <span>
+                          <span className="text-slate-400">Source:</span>{' '}
+                          <span className="font-mono">
+                            {item.source_table}
+                            {item.source_field ? `.${item.source_field}` : ''}
+                          </span>
+                        </span>
+                      )}
+                      {item.target_table && (
+                        <span>
+                          <span className="text-slate-400">→ Target:</span>{' '}
+                          <span className="font-mono">
+                            {item.target_table}
+                            {item.target_field ? `.${item.target_field}` : ''}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <span className="text-xs text-slate-400">{formatDate(item.updated_at)}</span>
               </div>
