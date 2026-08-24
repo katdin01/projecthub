@@ -147,6 +147,12 @@ const api = {
     update: invoke('taskTemplates:update'),
     delete: invoke('taskTemplates:delete')
   },
+  generalTasks: {
+    list: invoke('generalTasks:list'),
+    create: invoke('generalTasks:create'),
+    update: invoke('generalTasks:update'),
+    delete: invoke('generalTasks:delete')
+  },
   jira: {
     list: invoke('jira:list'),
     get: invoke('jira:get'),

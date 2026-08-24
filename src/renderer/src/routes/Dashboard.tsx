@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { DashboardData, ProjectType } from '@shared/types'
-import { Badge, Card, SectionTitle, EmptyState } from '../components/ui'
-import { formatDate } from '../lib/format'
+import type { DashboardData, ProjectType, GeneralTask, GeneralTaskStatus } from '@shared/types'
+import { Badge, Button, Card, Field, Input, Modal, SectionTitle, Textarea, EmptyState } from '../components/ui'
+import { formatDate, isOverdue } from '../lib/format'
 
 const projectTypeTone: Record<ProjectType, 'slate' | 'orange'> = {
   enterprise: 'slate',
@@ -274,6 +274,8 @@ export function Dashboard(): React.JSX.Element {
         )}
       </Card>
 
+      <GeneralTasksCard />
+
       <div className="columns-1 gap-4 md:columns-2">{order.map((id) => <div key={id}>{blocks[id]}</div>)}</div>
 
       <Card>
@@ -294,5 +296,124 @@ export function Dashboard(): React.JSX.Element {
         )}
       </Card>
     </div>
+  )
+}
+
+const emptyGeneralForm = { title: '', due_date: '', notes: '', status: 'open' as GeneralTaskStatus }
+
+// Non-project to-dos, managed right on the dashboard: title, due date, notes.
+function GeneralTasksCard(): React.JSX.Element {
+  const [tasks, setTasks] = useState<GeneralTask[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [form, setForm] = useState(emptyGeneralForm)
+
+  function refresh(): void {
+    api.generalTasks.list().then(setTasks)
+  }
+  useEffect(refresh, [])
+
+  function openNew(): void {
+    setForm(emptyGeneralForm)
+    setEditingId(null)
+    setModalOpen(true)
+  }
+  function openEdit(t: GeneralTask): void {
+    setForm({ title: t.title, due_date: t.due_date ?? '', notes: t.notes ?? '', status: t.status })
+    setEditingId(t.id)
+    setModalOpen(true)
+  }
+  async function save(): Promise<void> {
+    if (!form.title.trim()) return
+    const payload = {
+      title: form.title.trim(),
+      due_date: form.due_date || null,
+      notes: form.notes || null,
+      status: form.status
+    }
+    if (editingId) await api.generalTasks.update(editingId, payload)
+    else await api.generalTasks.create(payload)
+    setModalOpen(false)
+    refresh()
+  }
+  async function toggleDone(t: GeneralTask): Promise<void> {
+    await api.generalTasks.update(t.id, { status: t.status === 'done' ? 'open' : 'done' })
+    refresh()
+  }
+  async function remove(id: number): Promise<void> {
+    if (!confirm('Delete this to-do?')) return
+    await api.generalTasks.delete(id)
+    refresh()
+  }
+
+  const openCount = tasks.filter((t) => t.status !== 'done').length
+
+  return (
+    <Card>
+      <div className="mb-2 flex items-center justify-between">
+        <SectionTitle>General To-Dos{openCount > 0 ? ` (${openCount} open)` : ''}</SectionTitle>
+        <Button onClick={openNew}>+ Add</Button>
+      </div>
+      {tasks.length === 0 ? (
+        <EmptyState>No general to-dos yet. Add one that isn&apos;t tied to a project.</EmptyState>
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {tasks.map((t) => (
+            <li key={t.id} className="flex items-start gap-2 py-2">
+              <input type="checkbox" className="mt-1" checked={t.status === 'done'} onChange={() => toggleDone(t)} />
+              <div className="min-w-0 flex-1">
+                <button
+                  onClick={() => openEdit(t)}
+                  className={'text-left text-sm hover:underline ' + (t.status === 'done' ? 'text-slate-400 line-through' : '')}
+                >
+                  {t.title}
+                </button>
+                {t.notes && <div className="mt-0.5 whitespace-pre-wrap text-xs text-slate-400">{t.notes}</div>}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {t.due_date && (
+                  <span className="flex items-center gap-1 whitespace-nowrap text-xs text-slate-500">
+                    {formatDate(t.due_date)}
+                    {t.status !== 'done' && isOverdue(t.due_date) && <Badge tone="red">overdue</Badge>}
+                  </span>
+                )}
+                <button onClick={() => remove(t.id)} className="text-xs text-slate-300 hover:text-red-500" title="Delete">
+                  ✕
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? 'Edit to-do' : 'New to-do'}>
+        <div className="space-y-3">
+          <Field label="Task">
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="What needs doing?" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Due date">
+              <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+            </Field>
+            <Field label="Status">
+              <label className="flex items-center gap-2 pt-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.status === 'done'}
+                  onChange={(e) => setForm({ ...form, status: e.target.checked ? 'done' : 'open' })}
+                />
+                Done
+              </label>
+            </Field>
+          </div>
+          <Field label="Notes">
+            <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </Field>
+          <div className="flex justify-end">
+            <Button onClick={save}>{editingId ? 'Save' : 'Add'}</Button>
+          </div>
+        </div>
+      </Modal>
+    </Card>
   )
 }

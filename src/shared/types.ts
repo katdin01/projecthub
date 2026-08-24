@@ -197,6 +197,22 @@ export type ProjectTaskInput = Omit<
   'id' | 'created_at' | 'updated_at' | 'completed_at' | 'source_note_title'
 >
 
+// Non-project (global) to-do items shown on the main dashboard.
+export type GeneralTaskStatus = 'open' | 'done'
+
+export interface GeneralTask {
+  id: number
+  title: string
+  status: GeneralTaskStatus
+  due_date: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+}
+
+export type GeneralTaskInput = Omit<GeneralTask, 'id' | 'created_at' | 'updated_at' | 'completed_at'>
+
 export interface TaskTemplate {
   id: number
   name: string

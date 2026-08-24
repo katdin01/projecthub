@@ -18,6 +18,7 @@ import * as docs from '../src/main/db/repositories/docs'
 import * as dailyLogs from '../src/main/db/repositories/dailyLogs'
 import * as tasks from '../src/main/db/repositories/tasks'
 import * as taskTemplates from '../src/main/db/repositories/taskTemplates'
+import * as generalTasks from '../src/main/db/repositories/generalTasks'
 import * as jira from '../src/main/db/repositories/jira'
 import * as jiraCredentials from '../src/main/jira/credentials'
 import * as jiraClient from '../src/main/jira/client'
@@ -82,6 +83,12 @@ export const handlers: Record<string, Handler> = {
   'tasks:delete': (id: number) => tasks.deleteTask(id),
   'tasks:listAllOpen': () => tasks.listAllOpenTasksAcrossProjects(),
   'tasks:generateFromSchedule': (projectId: number) => tasks.generateTasksFromTemplates(projectId),
+
+  // General (non-project) to-dos
+  'generalTasks:list': () => generalTasks.listGeneralTasks(),
+  'generalTasks:create': (input) => generalTasks.createGeneralTask(input),
+  'generalTasks:update': (id: number, input) => generalTasks.updateGeneralTask(id, input),
+  'generalTasks:delete': (id: number) => generalTasks.deleteGeneralTask(id),
 
   // Task templates
   'taskTemplates:list': () => taskTemplates.listTaskTemplates(),

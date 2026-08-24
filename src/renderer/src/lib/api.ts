@@ -34,6 +34,8 @@ import type {
   JiraImportResult,
   TaskTemplate,
   TaskTemplateInput,
+  GeneralTask,
+  GeneralTaskInput,
   GenerateTasksResult,
   JiraConnectionSummary,
   JiraConnectionType,
@@ -110,6 +112,13 @@ export const api = {
     update: (id: number, input: Partial<TaskTemplateInput>): Promise<TaskTemplate> =>
       raw().taskTemplates.update(id, input),
     delete: (id: number): Promise<void> => raw().taskTemplates.delete(id)
+  },
+  generalTasks: {
+    list: (): Promise<GeneralTask[]> => raw().generalTasks.list(),
+    create: (input: GeneralTaskInput): Promise<GeneralTask> => raw().generalTasks.create(input),
+    update: (id: number, input: Partial<GeneralTaskInput>): Promise<GeneralTask> =>
+      raw().generalTasks.update(id, input),
+    delete: (id: number): Promise<void> => raw().generalTasks.delete(id)
   },
   jira: {
     list: (projectId: number): Promise<JiraItem[]> => raw().jira.list(projectId),
